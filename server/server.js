@@ -2,7 +2,7 @@ const express = require('express');
 const path = require('path');
 const morgan = require('morgan');
 const dotenv = require('dotenv');
-
+const logger = require('./logger');
 const app = express();
 
 const { sequelize } = require('./models');
@@ -19,8 +19,13 @@ sequelize.sync({ force: false })
   .catch((err) => {
     console.error(err);
   });
+  
+if(process.env.NODE_ENV == 'production'){
+  app.use(morgan('combined'));
+}else{
+  app.use(morgan('dev'));
+}
 
-app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, '../client/build')));
@@ -31,6 +36,8 @@ app.use('/test', indexRouter);
 app.use((req, res, next) => {
     const error =  new Error(`${req.method} ${req.url} 라우터가 없습니다.`);
     error.status = 404;
+    logger.info('hello');
+    logger.error(error.message);
     next(error);
   });
   
